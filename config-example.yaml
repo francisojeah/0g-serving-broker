@@ -1,0 +1,8 @@
+address: 0x6D233D2610c32f630ED53E8a7Cbf759568041f8f
+contractAddress: 0xf4e7AB4Cc8bC5f6f48FA3BCA8678e92Ba2f3185e
+mysql: root:123456@tcp(localhost:3306)/data_retrieve?parseTime=true
+privateKey: 2F63294033D7629EED58DF4E9F7B71E7448338BD48E1002F84D543EBD0C54349
+chainUrl: https://rpc-testnet.0g.ai
+servingUrl: http://localhost:8081
+customGasLimit: 895000001
+customGasPrice: 895000001
