@@ -66,6 +66,7 @@ func (d *Request) Bind(ctx *gin.Context) error {
 	d.PreviousOutputCount = r.PreviousOutputCount
 	d.PreviousSignature = r.PreviousSignature
 	d.Signature = r.Signature
+	d.Processed = r.Processed
 
 	return nil
 }

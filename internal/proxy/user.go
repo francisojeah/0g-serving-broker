@@ -48,7 +48,7 @@ func (p *Proxy) GetData(c *gin.Context, url, route, provider, key string) {
 	dbReq := model.Request{
 		CreatedAt:           time.Now().Format(time.RFC3339),
 		UserAddress:         p.address,
-		Nonce:               "12345",
+		Nonce:               "123456789101112",
 		Name:                route,
 		InputCount:          fmt.Sprintf("%d", tokenCount),
 		PreviousOutputCount: "0",
