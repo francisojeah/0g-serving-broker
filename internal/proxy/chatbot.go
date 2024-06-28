@@ -47,7 +47,6 @@ func validate(dbReq model.Request, provider string) (bool, error) {
 	// TODO: Verify the following fields in the request header:
 	//  - inputToken matches the number of input tokens in the request body.
 	//  - previousOutputCount matches the number of tokens returned in the previous response.
-	//  - previousSignature matches the signature of the previous request.
 	//  - nonce is greater than the nonce of the previous request.
 
 	cReq := contract.Request{}

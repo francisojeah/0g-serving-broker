@@ -108,8 +108,6 @@ func getRequest(req *http.Request) (*model.Request, error) {
 			dbReq.InputCount = values[0]
 		case "Previous-Output-Token-Count":
 			dbReq.PreviousOutputCount = values[0]
-		case "Previous-Signature":
-			dbReq.PreviousSignature = values[0]
 		case "Signature":
 			dbReq.Signature = values[0]
 		case "Created-At":

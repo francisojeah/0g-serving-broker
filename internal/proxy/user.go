@@ -51,7 +51,6 @@ func (p *Proxy) GetData(c *gin.Context, url, name, provider, key string) {
 	req.Header.Set("Previous-Output-Token-Count", cbReq.PreviousOutputCount)
 	req.Header.Set("Created-At", cbReq.CreatedAt)
 	req.Header.Set("Nonce", cbReq.Nonce)
-	req.Header.Set("Previous-Signature", cbReq.PreviousSignature)
 	req.Header.Set("Signature", cbReq.Signature)
 
 	for key, values := range c.Request.Header {
