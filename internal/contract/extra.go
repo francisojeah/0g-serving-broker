@@ -18,10 +18,9 @@ func (r Request) ConvertToDb() model.Request {
 		CreatedAt:           r.CreatedAt.String(),
 		UserAddress:         r.UserAddress.String(),
 		Nonce:               r.Nonce.String(),
-		Name:                r.Name,
+		ServiceName:         r.ServiceName,
 		InputCount:          r.InputCount.String(),
 		PreviousOutputCount: r.PreviousOutputCount.String(),
-		PreviousSignature:   hexutil.Encode(r.PreviousSignature),
 		Signature:           hexutil.Encode(r.Signature),
 	}
 
@@ -32,10 +31,9 @@ func (r Request) GetMessage(serviceProviderAddress string) (common.Hash, error) 
 	buf := new(bytes.Buffer)
 	buf.Write(common.HexToAddress(serviceProviderAddress).Bytes())
 	buf.Write(r.UserAddress.Bytes())
-	buf.Write([]byte(r.Name))
+	buf.Write([]byte(r.ServiceName))
 	buf.Write(common.LeftPadBytes(r.InputCount.Bytes(), 32))
 	buf.Write(common.LeftPadBytes(r.PreviousOutputCount.Bytes(), 32))
-	buf.Write(r.PreviousSignature)
 	buf.Write(common.LeftPadBytes(r.Nonce.Bytes(), 32))
 	buf.Write(common.LeftPadBytes(r.CreatedAt.Bytes(), 32))
 
@@ -82,10 +80,6 @@ func (r *Request) ConvertFromDB(req model.Request) error {
 	if !ok {
 		return errors.Wrapf(errors.New("invalid PreviousOutputCount"), "converted from %s", req.PreviousOutputCount)
 	}
-	previousSignature, err := hexutil.Decode(req.PreviousSignature)
-	if err != nil {
-		return errors.Wrapf(err, "convert PreviousSignature %s", req.PreviousSignature)
-	}
 	createdAt, err := time.Parse(time.RFC3339, req.CreatedAt)
 	if err != nil {
 		return errors.Wrapf(err, "convert createdAt %s", req.CreatedAt)
@@ -100,10 +94,9 @@ func (r *Request) ConvertFromDB(req model.Request) error {
 
 	r.UserAddress = userAddress
 	r.Nonce = nonce
-	r.Name = req.Name
+	r.ServiceName = req.ServiceName
 	r.InputCount = inputCount
 	r.PreviousOutputCount = previousOutputCount
-	r.PreviousSignature = previousSignature
 	r.Signature = signature
 	r.CreatedAt = big.NewInt(createdAt.Unix())
 

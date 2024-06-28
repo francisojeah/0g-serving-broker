@@ -10,12 +10,12 @@ import (
 
 //go:generate go run ./gen
 
-type DataRetrieveContract struct {
+type ServingContract struct {
 	*Contract
-	*DataRetrieve
+	*Serving
 }
 
-func NewDataRetrieveContract(dataRetrieveAddress common.Address, clientWithSigner *web3go.Client, customGasPrice, customGasLimit uint64) (*DataRetrieveContract, error) {
+func NewServingContract(servingAddress common.Address, clientWithSigner *web3go.Client, customGasPrice, customGasLimit uint64) (*ServingContract, error) {
 	backend, signer := clientWithSigner.ToClientForContract()
 
 	contract, err := newContract(clientWithSigner, signer, customGasPrice, customGasLimit)
@@ -23,12 +23,12 @@ func NewDataRetrieveContract(dataRetrieveAddress common.Address, clientWithSigne
 		return nil, err
 	}
 
-	dataRetrieve, err := NewDataRetrieve(dataRetrieveAddress, backend)
+	serving, err := NewServing(servingAddress, backend)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DataRetrieveContract{contract, dataRetrieve}, nil
+	return &ServingContract{contract, serving}, nil
 }
 
 type Contract struct {

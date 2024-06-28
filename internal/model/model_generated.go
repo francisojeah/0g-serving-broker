@@ -30,6 +30,8 @@ func (d *Account) Bind(ctx *gin.Context) error {
 	d.Balance = r.Balance
 	d.PendingRefund = r.PendingRefund
 	d.Refunds = r.Refunds
+	d.LastResponseTokenCount = r.LastResponseTokenCount
+	d.Nonce = r.Nonce
 
 	return nil
 }
@@ -61,7 +63,7 @@ func (d *Request) Bind(ctx *gin.Context) error {
 	d.CreatedAt = r.CreatedAt
 	d.UserAddress = r.UserAddress
 	d.Nonce = r.Nonce
-	d.Name = r.Name
+	d.ServiceName = r.ServiceName
 	d.InputCount = r.InputCount
 	d.PreviousOutputCount = r.PreviousOutputCount
 	d.PreviousSignature = r.PreviousSignature
@@ -72,37 +74,6 @@ func (d *Request) Bind(ctx *gin.Context) error {
 }
 
 func (d *Request) BindWithReadonly(ctx *gin.Context, old Request) error {
-	if err := d.Bind(ctx); err != nil {
-		return err
-	}
-	if d.ID == nil {
-		d.ID = old.ID
-	}
-
-	return nil
-}
-
-// ================================= Retrieval =================================
-func (d *Retrieval) BeforeCreate(tx *gorm.DB) error {
-	if d.ID == nil {
-		d.ID = PtrOf(uuid.New())
-	}
-	return nil
-}
-
-func (d *Retrieval) Bind(ctx *gin.Context) error {
-	var r Retrieval
-	if err := ctx.ShouldBindJSON(&r); err != nil {
-		return err
-	}
-	d.Nonce = r.Nonce
-	d.Provider = r.Provider
-	d.Refunds = r.Refunds
-
-	return nil
-}
-
-func (d *Retrieval) BindWithReadonly(ctx *gin.Context, old Retrieval) error {
 	if err := d.Bind(ctx); err != nil {
 		return err
 	}

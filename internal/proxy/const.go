@@ -6,10 +6,9 @@ var (
 	requestMetaData = map[string]struct{}{
 		"Address":                     {},
 		"Created-At":                  {},
-		"Name":                        {},
+		"Service-Name":                {},
 		"Nonce":                       {},
 		"Previous-Output-Token-Count": {},
-		"Previous-Signature":          {},
 		"Signature":                   {},
 		"Token-Count":                 {},
 	}

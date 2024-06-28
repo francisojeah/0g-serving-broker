@@ -15,7 +15,7 @@ import (
 type Proxy struct {
 	db       *gorm.DB
 	router   *gin.Engine
-	contract *contract.DataRetrieveContract
+	contract *contract.ServingContract
 
 	address    string
 	privateKey string
@@ -25,7 +25,7 @@ type Proxy struct {
 	serviceGroup      *gin.RouterGroup
 }
 
-func New(db *gorm.DB, router *gin.Engine, c *contract.DataRetrieveContract, address, privateKey string) *Proxy {
+func New(db *gorm.DB, router *gin.Engine, c *contract.ServingContract, address, privateKey string) *Proxy {
 	p := &Proxy{
 		db:            db,
 		router:        router,

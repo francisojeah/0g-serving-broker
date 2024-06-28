@@ -9,13 +9,13 @@ import (
 
 type Handler struct {
 	db         *gorm.DB
-	contract   *contract.DataRetrieveContract
+	contract   *contract.ServingContract
 	key        string
 	proxy      *proxy.Proxy
 	servingUrl string
 }
 
-func New(db *gorm.DB, p *proxy.Proxy, c *contract.DataRetrieveContract, servingUrl, key string) *Handler {
+func New(db *gorm.DB, p *proxy.Proxy, c *contract.ServingContract, servingUrl, key string) *Handler {
 	h := &Handler{
 		db:         db,
 		contract:   c,

@@ -43,8 +43,8 @@ func ValidateUpdateRequest(oldVal, newVal Request) error {
 	if !apiequality.Semantic.DeepEqual(newVal.Nonce, oldVal.Nonce){
 		fields = append(fields, "nonce")
 	}
-	if !apiequality.Semantic.DeepEqual(newVal.Name, oldVal.Name){
-		fields = append(fields, "name")
+	if !apiequality.Semantic.DeepEqual(newVal.ServiceName, oldVal.ServiceName){
+		fields = append(fields, "serviceName")
 	}
 	if !apiequality.Semantic.DeepEqual(newVal.InputCount, oldVal.InputCount){
 		fields = append(fields, "inputCount")
@@ -57,25 +57,6 @@ func ValidateUpdateRequest(oldVal, newVal Request) error {
 	}
 	if !apiequality.Semantic.DeepEqual(newVal.Signature, oldVal.Signature){
 		fields = append(fields, "signature")
-	}
-
-	if len(fields) > 0 {
-		return fmt.Errorf("update field: [%s] not allowed", strings.Join(fields, ","))
-	}
-	return nil
-}
-
-func ValidateUpdateRetrieval(oldVal, newVal Retrieval) error {
-	fields := []string{}
-	if newVal.ID != nil && !apiequality.Semantic.DeepEqual(newVal.ID, oldVal.ID){
-		fields = append(fields, "id")
-	}
-	
-	if !apiequality.Semantic.DeepEqual(newVal.Nonce, oldVal.Nonce){
-		fields = append(fields, "nonce")
-	}
-	if !apiequality.Semantic.DeepEqual(newVal.Provider, oldVal.Provider){
-		fields = append(fields, "provider")
 	}
 
 	if len(fields) > 0 {
