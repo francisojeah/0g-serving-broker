@@ -1,7 +1,7 @@
 package proxy
 
 import (
-	"fmt"
+	"encoding/json"
 	"strings"
 
 	"github.com/0glabs/0g-data-retrieve-agent/internal/contract"
@@ -9,36 +9,61 @@ import (
 	"github.com/0glabs/0g-data-retrieve-agent/internal/model"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	"gorm.io/gorm"
 )
 
 type chatBotRequest model.Request
 
-// Generate used by the user agent to generate the next request,
-// the data is sourced from the proxied request, previous response,
-// and the signature from those data.
-func (c *chatBotRequest) generate(reqBody map[string]interface{}, key, provider string) error {
-	// TODO: Get metadata from DB instead of mock
+// Generate used by the user agent to generate the next request metadata
+func (c *chatBotRequest) generate(db *gorm.DB, reqBody map[string]interface{}, key, provider string) error {
+	account := model.Account{}
+	if ret := db.Where(&model.Account{Provider: provider, User: c.UserAddress}).First(&account); ret.Error != nil {
+		return errors.Wrap(ret.Error, "get account from db")
+	}
 
-	// For Chatbot: Read the request body to extract the `message` field
+	c.PreviousOutputCount = account.LastResponseTokenCount
+	c.Nonce = account.Nonce
+
 	message, ok := reqBody["message"].(string)
 	if !ok || message == "" {
 		return errors.New("Missing or invalid message field")
 
 	}
-	c.InputCount = fmt.Sprintf("%d", len(strings.Fields(message)))
+	c.InputCount = int64(len(strings.Fields(message)))
 
-	cReq := contract.Request{}
-	if err := cReq.ConvertFromDB(model.Request(*c)); err != nil {
-		return nil
+	cReq, err := contract.ConvertFromDB(model.Request(*c))
+	if err != nil {
+		return err
 	}
 
 	sig, err := cReq.GetSignature(key, provider)
 	if err != nil {
-		return nil
+		return err
 	}
 	c.Signature = hexutil.Encode(sig)
 
-	return nil
+	ret := db.Model(&model.Account{}).
+		Where(&model.Account{Provider: provider, User: c.UserAddress}).
+		Updates(model.Account{Nonce: c.Nonce + 1})
+
+	return errors.Wrap(ret.Error, "update in db")
+}
+
+func (c *chatBotRequest) updateResponse(db *gorm.DB, resp []byte, provider string) error {
+	// TODO: Get output token count from resp.Body
+
+	var res struct {
+		Response string `json:"response"`
+	}
+	if err := json.Unmarshal(resp, &res); err != nil {
+		return errors.Wrap(err, "unmarshal response")
+	}
+
+	ret := db.Model(&model.Account{}).
+		Where(&model.Account{Provider: provider, User: c.UserAddress}).
+		Updates(model.Account{LastResponseTokenCount: int64(len(strings.Fields(res.Response)))})
+
+	return errors.Wrap(ret.Error, "update in db")
 }
 
 // Called by the user agent, extract metadata from the request for subsequent signing.
@@ -49,8 +74,8 @@ func validate(dbReq model.Request, provider string) (bool, error) {
 	//  - previousOutputCount matches the number of tokens returned in the previous response.
 	//  - nonce is greater than the nonce of the previous request.
 
-	cReq := contract.Request{}
-	if err := cReq.ConvertFromDB(dbReq); err != nil {
+	cReq, err := contract.ConvertFromDB(dbReq)
+	if err != nil {
 		return false, errors.Wrap(err, "convert request from db schema to contract schema")
 	}
 

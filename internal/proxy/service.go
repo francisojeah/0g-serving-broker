@@ -3,6 +3,7 @@ package proxy
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -51,7 +52,7 @@ func (p *Proxy) proxyHTTPRequest(c *gin.Context, route, targetURL string) {
 		return
 	}
 	if ret := p.db.Create(&dbReq); ret.Error != nil {
-		errors.Response(c, err)
+		errors.Response(c, ret.Error)
 		return
 	}
 
@@ -101,13 +102,25 @@ func getRequest(req *http.Request) (*model.Request, error) {
 		case "Address":
 			dbReq.UserAddress = values[0]
 		case "Nonce":
-			dbReq.Nonce = values[0]
+			num, err := strconv.ParseInt(values[0], 10, 64)
+			if err != nil {
+				return nil, errors.Wrapf(err, "parse nonce from string %s", values[0])
+			}
+			dbReq.Nonce = num
 		case "Service-Name":
 			dbReq.ServiceName = values[0]
 		case "Token-Count":
-			dbReq.InputCount = values[0]
+			num, err := strconv.ParseInt(values[0], 10, 64)
+			if err != nil {
+				return nil, errors.Wrapf(err, "parse inputCount from string %s", values[0])
+			}
+			dbReq.InputCount = num
 		case "Previous-Output-Token-Count":
-			dbReq.PreviousOutputCount = values[0]
+			num, err := strconv.ParseInt(values[0], 10, 64)
+			if err != nil {
+				return nil, errors.Wrapf(err, "parse previousOutputCount from string %s", values[0])
+			}
+			dbReq.PreviousOutputCount = num
 		case "Signature":
 			dbReq.Signature = values[0]
 		case "Created-At":

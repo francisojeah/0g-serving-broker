@@ -13,20 +13,6 @@ import (
 	"github.com/0glabs/0g-data-retrieve-agent/internal/model"
 )
 
-func (r Request) ConvertToDb() model.Request {
-	ret := model.Request{
-		CreatedAt:           r.CreatedAt.String(),
-		UserAddress:         r.UserAddress.String(),
-		Nonce:               r.Nonce.String(),
-		ServiceName:         r.ServiceName,
-		InputCount:          r.InputCount.String(),
-		PreviousOutputCount: r.PreviousOutputCount.String(),
-		Signature:           hexutil.Encode(r.Signature),
-	}
-
-	return ret
-}
-
 func (r Request) GetMessage(serviceProviderAddress string) (common.Hash, error) {
 	buf := new(bytes.Buffer)
 	buf.Write(common.HexToAddress(serviceProviderAddress).Bytes())
@@ -66,39 +52,28 @@ func (r Request) GetSignature(keyHex string, provide string) ([]byte, error) {
 	return sig, nil
 }
 
-func (r *Request) ConvertFromDB(req model.Request) error {
-	userAddress := common.HexToAddress(req.UserAddress)
-	nonce, ok := new(big.Int).SetString(req.Nonce, 10)
-	if !ok {
-		return errors.Wrapf(errors.New("invalid Nonce"), "converted from %s", req.Nonce)
-	}
-	inputCount, ok := new(big.Int).SetString(req.InputCount, 10)
-	if !ok {
-		return errors.Wrapf(errors.New("invalid InputCount"), "converted from %s", req.InputCount)
-	}
-	previousOutputCount, ok := new(big.Int).SetString(req.PreviousOutputCount, 10)
-	if !ok {
-		return errors.Wrapf(errors.New("invalid PreviousOutputCount"), "converted from %s", req.PreviousOutputCount)
+func ConvertFromDB(req model.Request) (Request, error) {
+	ret := Request{
+		UserAddress:         common.HexToAddress(req.UserAddress),
+		Nonce:               toBigInt(req.Nonce),
+		ServiceName:         req.ServiceName,
+		InputCount:          toBigInt(req.InputCount),
+		PreviousOutputCount: toBigInt(req.PreviousOutputCount),
 	}
 	createdAt, err := time.Parse(time.RFC3339, req.CreatedAt)
 	if err != nil {
-		return errors.Wrapf(err, "convert createdAt %s", req.CreatedAt)
+		return ret, errors.Wrapf(err, "convert createdAt %s", req.CreatedAt)
 	}
-	var signature []byte
-	if req.Signature != "" {
-		signature, err = hexutil.Decode(req.Signature)
-		if err != nil {
-			return errors.Wrapf(err, "convert signature from request: %s", req.Signature)
-		}
+	ret.CreatedAt = big.NewInt(createdAt.Unix())
+
+	if req.Signature == "" {
+		return ret, nil
 	}
 
-	r.UserAddress = userAddress
-	r.Nonce = nonce
-	r.ServiceName = req.ServiceName
-	r.InputCount = inputCount
-	r.PreviousOutputCount = previousOutputCount
-	r.Signature = signature
-	r.CreatedAt = big.NewInt(createdAt.Unix())
+	ret.Signature, err = hexutil.Decode(req.Signature)
+	return ret, errors.Wrapf(err, "convert signature %s", req.Signature)
+}
 
-	return nil
+func toBigInt(value int64) *big.Int {
+	return new(big.Int).SetInt64(value)
 }

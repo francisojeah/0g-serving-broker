@@ -15,12 +15,25 @@ func ValidateUpdateAccount(oldVal, newVal Account) error {
 		fields = append(fields, "id")
 	}
 	
-	if !apiequality.Semantic.DeepEqual(newVal.User, oldVal.User){
-		fields = append(fields, "user")
-	}
 	if !apiequality.Semantic.DeepEqual(newVal.Provider, oldVal.Provider){
 		fields = append(fields, "provider")
 	}
+	if !apiequality.Semantic.DeepEqual(newVal.User, oldVal.User){
+		fields = append(fields, "user")
+	}
+
+	if len(fields) > 0 {
+		return fmt.Errorf("update field: [%s] not allowed", strings.Join(fields, ","))
+	}
+	return nil
+}
+
+func ValidateUpdateModel(oldVal, newVal Model) error {
+	fields := []string{}
+	if newVal.ID != nil && !apiequality.Semantic.DeepEqual(newVal.ID, oldVal.ID){
+		fields = append(fields, "id")
+	}
+	
 
 	if len(fields) > 0 {
 		return fmt.Errorf("update field: [%s] not allowed", strings.Join(fields, ","))

@@ -21,12 +21,12 @@ func Migrate(database *gorm.DB) error {
 				type Service struct {
 					model.Model
 					CreatedAt   *time.Time            `json:"createdAt" readonly:"true" gen:"-"`
-					Name        string                `gorm:"type:varchar(255);not null;uniqueIndex:deleted_name" json:"name" binding:"required" immutable:"true"`
-					Type        string                `gorm:"type:varchar(255);not null" json:"type" binding:"required"`
-					URL         string                `gorm:"type:varchar(255);not null" json:"url" binding:"required"`
-					InputPrice  int64                 `gorm:"type:bigint;not null" json:"inputPrice" binding:"required"`
-					OutputPrice int64                 `gorm:"type:bigint;not null" json:"outputPrice" binding:"required"`
-					DeletedAt   soft_delete.DeletedAt `gorm:"softDelete:nano;not null;default:0;index:deleted_name" json:"-" readonly:"true"`
+					Name        string                `gorm:"type:varchar(255);not null;uniqueIndex:deleted_name"`
+					Type        string                `gorm:"type:varchar(255);not null"`
+					URL         string                `gorm:"type:varchar(255);not null"`
+					InputPrice  int64                 `gorm:"type:bigint;not null"`
+					OutputPrice int64                 `gorm:"type:bigint;not null"`
+					DeletedAt   soft_delete.DeletedAt `gorm:"softDelete:nano;not null;default:0;index:deleted_name"`
 				}
 				return tx.AutoMigrate(&Service{})
 			},
@@ -37,14 +37,14 @@ func Migrate(database *gorm.DB) error {
 				type Account struct {
 					model.Model
 					CreatedAt              *time.Time            `json:"createdAt" readonly:"true" gen:"-"`
-					User                   string                `gorm:"type:varchar(255);not null;index:deleted_user_provider" json:"user" binding:"required" immutable:"true"`
-					Provider               string                `gorm:"type:varchar(255);not null;index:deleted_user_provider" json:"provider" binding:"required" immutable:"true"`
-					Balance                string                `gorm:"type:varchar(255);not null" json:"balance"`
-					PendingRefund          string                `gorm:"type:varchar(255);not null" json:"pendingRefund"`
-					Refunds                model.Refunds         `gorm:"type:json;not null;default:('[]')" json:"refunds"`
-					LastResponseTokenCount string                `gorm:"type:varchar(255);not null;default:0" json:"lastResponseTokenCount"`
-					Nonce                  string                `gorm:"type:varchar(255);not null;default:0" json:"nonce"`
-					DeletedAt              soft_delete.DeletedAt `gorm:"softDelete:nano;not null;default:0;index:deleted_name" json:"-" readonly:"true"`
+					Provider               string                `gorm:"type:varchar(255);not null;uniqueIndex:deleted_user_provider"`
+					User                   string                `gorm:"type:varchar(255);not null;index:deleted_user_provider"`
+					Balance                string                `gorm:"type:varchar(255);not null;default:0"`
+					PendingRefund          string                `gorm:"type:varchar(255);not null;default:0"`
+					Refunds                model.Refunds         `gorm:"type:json;not null;default:('[]')"`
+					LastResponseTokenCount int64                 `gorm:"type:bigint;not null;default:0"`
+					Nonce                  int64                 `gorm:"type:bigint;not null;default:1"`
+					DeletedAt              soft_delete.DeletedAt `gorm:"softDelete:nano;not null;default:0;index:deleted_user_provider"`
 				}
 				return tx.AutoMigrate(&Account{})
 			},
@@ -54,14 +54,14 @@ func Migrate(database *gorm.DB) error {
 			Migrate: func(tx *gorm.DB) error {
 				type Request struct {
 					model.Model
-					CreatedAt           string `gorm:"type:varchar(255);not null" json:"createdAt" immutable:"true"`
-					UserAddress         string `gorm:"type:varchar(255);not null" json:"userAddress" binding:"required" immutable:"true"`
-					Nonce               string `gorm:"type:varchar(255);not null" json:"nonce" binding:"required" immutable:"true"`
-					ServiceName         string `gorm:"type:varchar(255);not null" json:"serviceName" binding:"required" immutable:"true"`
-					InputCount          string `gorm:"type:varchar(255);not null" json:"inputCount" binding:"required" immutable:"true"`
-					PreviousOutputCount string `gorm:"type:varchar(255);not null" json:"previousOutputCount" binding:"required" immutable:"true"`
-					Signature           string `gorm:"type:varchar(255);not null" json:"signature" binding:"required" immutable:"true"`
-					Processed           *bool  `gorm:"type:tinyint(1);not null;default:1" json:"processed" default:"false"`
+					CreatedAt           string `gorm:"type:varchar(255);not null"`
+					UserAddress         string `gorm:"type:varchar(255);not null;uniqueIndex:userAddress_nonce"`
+					Nonce               int64  `gorm:"type:bigint;not null;index:userAddress_nonce"`
+					ServiceName         string `gorm:"type:varchar(255);not null"`
+					InputCount          int64  `gorm:"type:bigint;not null"`
+					PreviousOutputCount int64  `gorm:"type:bigint;not null"`
+					Signature           string `gorm:"type:varchar(255);not null"`
+					Processed           bool   `gorm:"type:tinyint(1);not null;default:0"`
 				}
 				return tx.AutoMigrate(&Request{})
 			},

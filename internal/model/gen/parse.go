@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -59,7 +58,6 @@ func parse(searchDir string) (map[string][]*ast.Field, []string, []string, map[s
 			parseScanValue(allTypeSpec, field, requireScanValue)
 		}
 		if needBind {
-			log.Println(typ)
 			bind = append(bind, typ)
 		}
 		if needImmutable {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/0glabs/0g-data-retrieve-agent/internal/errors"
@@ -23,11 +24,10 @@ func (p *Proxy) GetData(c *gin.Context, url, name, provider, key string) {
 	cbReq := chatBotRequest{
 		CreatedAt:           time.Now().Format(time.RFC3339),
 		UserAddress:         p.address,
-		Nonce:               "12345678910111213",
 		ServiceName:         name,
-		PreviousOutputCount: "0",
+		PreviousOutputCount: 0,
 	}
-	if err := cbReq.generate(reqBody, key, provider); err != nil {
+	if err := cbReq.generate(p.db, reqBody, key, provider); err != nil {
 		errors.Response(c, err)
 		return
 	}
@@ -45,12 +45,12 @@ func (p *Proxy) GetData(c *gin.Context, url, name, provider, key string) {
 		return
 	}
 
-	req.Header.Set("Token-Count", cbReq.InputCount)
+	req.Header.Set("Token-Count", strconv.FormatUint(uint64(cbReq.InputCount), 10))
 	req.Header.Set("Address", cbReq.UserAddress)
 	req.Header.Set("Service-Name", cbReq.ServiceName)
-	req.Header.Set("Previous-Output-Token-Count", cbReq.PreviousOutputCount)
+	req.Header.Set("Previous-Output-Token-Count", strconv.FormatUint(uint64(cbReq.PreviousOutputCount), 10))
 	req.Header.Set("Created-At", cbReq.CreatedAt)
-	req.Header.Set("Nonce", cbReq.Nonce)
+	req.Header.Set("Nonce", strconv.FormatUint(uint64(cbReq.Nonce), 10))
 	req.Header.Set("Signature", cbReq.Signature)
 
 	for key, values := range c.Request.Header {
@@ -71,12 +71,16 @@ func (p *Proxy) GetData(c *gin.Context, url, name, provider, key string) {
 	}
 	c.Writer.WriteHeader(resp.StatusCode)
 
-	// TODO: Get output token count from resp.Body
-
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		errors.Response(c, err)
 		return
 	}
+
+	if err := cbReq.updateResponse(p.db, body, provider); err != nil {
+		errors.Response(c, err)
+		return
+	}
+
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
 }

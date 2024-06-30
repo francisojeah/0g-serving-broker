@@ -38,9 +38,10 @@ func (h *Handler) RegisterService(ctx *gin.Context) {
 		_, err := h.contract.AddOrUpdateService(
 			h.contract.CreateTransactOpts(),
 			service.Name,
+			service.Type,
+			h.servingUrl,
 			toBigInt(service.InputPrice),
 			toBigInt(service.OutputPrice),
-			h.servingUrl,
 		)
 		return errors.Wrap(err, "add service")
 	}
@@ -71,7 +72,8 @@ func (h *Handler) ListService(ctx *gin.Context) {
 
 func (h *Handler) DeleteService(ctx *gin.Context) {
 	name := ctx.Param("name")
-	if ret := h.db.Where("name = ?", name).Delete(&model.Service{}); ret.Error != nil {
+	ret := h.db.Where("name = ?", name).Delete(&model.Service{})
+	if ret.Error != nil {
 		errors.Response(ctx, errors.Wrapf(ret.Error, "delete service %s in db", name))
 		return
 	}
@@ -88,34 +90,47 @@ func (h *Handler) DeleteService(ctx *gin.Context) {
 
 func (h *Handler) SettleFees(ctx *gin.Context) {
 	reqs := []model.Request{}
-	if ret := h.db.Model(model.Request{}).Order("created_at DESC").Find(&reqs); ret.Error != nil {
+	ret := h.db.Model(model.Request{}).
+		Where("processed = ?", false).
+		Order("nonce ASC").Find(&reqs)
+	if ret.Error != nil {
 		errors.Response(ctx, errors.Wrap(ret.Error, "list request in db"))
 		return
 	}
 
-	categorizedTraces := make(map[string]contract.RequestTrace)
+	categorizedTraces := make(map[string]*contract.RequestTrace)
 	for _, req := range reqs {
-		cReq := contract.Request{}
-		if err := cReq.ConvertFromDB(req); err != nil {
+		cReq, err := contract.ConvertFromDB(req)
+		if err != nil {
 			errors.Response(ctx, err)
 			return
 		}
-		if v, ok := categorizedTraces[req.UserAddress]; ok {
-			v.Requests = append(v.Requests, cReq)
+		_, ok := categorizedTraces[req.UserAddress]
+		if ok {
+			categorizedTraces[req.UserAddress].Requests = append(categorizedTraces[req.UserAddress].Requests, cReq)
 			continue
 		}
-		categorizedTraces[req.UserAddress] = contract.RequestTrace{
+		categorizedTraces[req.UserAddress] = &contract.RequestTrace{
 			Requests: []contract.Request{cReq},
 		}
 	}
 
 	traces := []contract.RequestTrace{}
 	for _, t := range categorizedTraces {
-		traces = append(traces, t)
+		traces = append(traces, *t)
 	}
 
 	_, err := h.contract.SettleFees(h.contract.CreateTransactOpts(), traces)
 	if err != nil {
+		errors.Response(ctx, err)
+		return
+	}
+
+	ret = h.db.Model(&model.Request{}).
+		Where("processed = ?", false).
+		Updates(model.Request{Processed: true})
+
+	if ret.Error != nil {
 		errors.Response(ctx, err)
 		return
 	}
