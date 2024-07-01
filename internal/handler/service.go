@@ -120,7 +120,13 @@ func (h *Handler) SettleFees(ctx *gin.Context) {
 		traces = append(traces, *t)
 	}
 
-	_, err := h.contract.SettleFees(h.contract.CreateTransactOpts(), traces)
+	tx, err := h.contract.SettleFees(h.contract.CreateTransactOpts(), traces)
+	if err != nil {
+		errors.Response(ctx, err)
+		return
+	}
+
+	_, err = h.contract.WaitForReceipt(tx.Hash(), true)
 	if err != nil {
 		errors.Response(ctx, err)
 		return

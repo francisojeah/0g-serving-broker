@@ -15,6 +15,7 @@ import (
 type chatBotRequest model.Request
 
 // Generate used by the user agent to generate the next request metadata
+
 func (c *chatBotRequest) generate(db *gorm.DB, reqBody map[string]interface{}, key, provider string) error {
 	account := model.Account{}
 	if ret := db.Where(&model.Account{Provider: provider, User: c.UserAddress}).First(&account); ret.Error != nil {
@@ -50,8 +51,6 @@ func (c *chatBotRequest) generate(db *gorm.DB, reqBody map[string]interface{}, k
 }
 
 func (c *chatBotRequest) updateResponse(db *gorm.DB, resp []byte, provider string) error {
-	// TODO: Get output token count from resp.Body
-
 	var res struct {
 		Response string `json:"response"`
 	}
@@ -65,8 +64,6 @@ func (c *chatBotRequest) updateResponse(db *gorm.DB, resp []byte, provider strin
 
 	return errors.Wrap(ret.Error, "update in db")
 }
-
-// Called by the user agent, extract metadata from the request for subsequent signing.
 
 func validate(dbReq model.Request, provider string) (bool, error) {
 	// TODO: Verify the following fields in the request header:

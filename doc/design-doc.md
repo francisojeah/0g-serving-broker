@@ -70,3 +70,13 @@ project
 ## Test Cases
 
 Please refer to the README.md under the repo for test cases.
+
+## Gas consumption per settlement
+
+| Number of requests in settlement | Gas consumption |
+| -------------------------------- | --------------- |
+| 0                                | 30059           |
+| 10                               | 192553          |
+| 20                               | 320426          |
+| 30                               | 448717          |
+| 40                               | 577653          |
