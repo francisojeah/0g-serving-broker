@@ -126,11 +126,12 @@ func (h *Handler) SettleFees(ctx *gin.Context) {
 		return
 	}
 
-	_, err = h.contract.WaitForReceipt(tx.Hash(), true)
+	reci, err := h.contract.WaitForReceipt(tx.Hash(), true)
 	if err != nil {
 		errors.Response(ctx, err)
 		return
 	}
+	log.Println("reci", reci)
 
 	ret = h.db.Model(&model.Request{}).
 		Where("processed = ?", false).

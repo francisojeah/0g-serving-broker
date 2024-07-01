@@ -12,6 +12,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// https://platform.openai.com/docs/api-reference/making-requests
+
+type Message struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type Choice struct {
+	Message Message `json:"message"`
+}
+
 type chatBotRequest model.Request
 
 // Generate used by the user agent to generate the next request metadata
@@ -25,12 +36,23 @@ func (c *chatBotRequest) generate(db *gorm.DB, reqBody map[string]interface{}, k
 	c.PreviousOutputCount = account.LastResponseTokenCount
 	c.Nonce = account.Nonce
 
-	message, ok := reqBody["message"].(string)
-	if !ok || message == "" {
-		return errors.New("Missing or invalid message field")
-
+	// https://platform.openai.com/docs/api-reference/making-requests
+	messages, ok := reqBody["messages"].([]interface{})
+	if !ok || messages == nil {
+		return errors.New("Missing or invalid messages field")
 	}
-	c.InputCount = int64(len(strings.Fields(message)))
+
+	for _, m := range messages {
+		message, ok := m.(map[string]interface{})
+		if !ok || message == nil {
+			return errors.New("Missing or invalid message field")
+		}
+		content, ok := message["content"].(string)
+		if !ok || content == "" {
+			return errors.New("Missing or invalid content field")
+		}
+		c.InputCount += int64(len(strings.Fields(content)))
+	}
 
 	cReq, err := contract.ConvertFromDB(model.Request(*c))
 	if err != nil {
@@ -52,15 +74,20 @@ func (c *chatBotRequest) generate(db *gorm.DB, reqBody map[string]interface{}, k
 
 func (c *chatBotRequest) updateResponse(db *gorm.DB, resp []byte, provider string) error {
 	var res struct {
-		Response string `json:"response"`
+		Choices []Choice `json:"choices"`
 	}
 	if err := json.Unmarshal(resp, &res); err != nil {
 		return errors.Wrap(err, "unmarshal response")
 	}
 
+	outputCount := int64(0)
+	for _, content := range res.Choices {
+		outputCount += int64(len(strings.Fields(content.Message.Content)))
+	}
+
 	ret := db.Model(&model.Account{}).
 		Where(&model.Account{Provider: provider, User: c.UserAddress}).
-		Updates(model.Account{LastResponseTokenCount: int64(len(strings.Fields(res.Response)))})
+		Updates(model.Account{LastResponseTokenCount: outputCount})
 
 	return errors.Wrap(ret.Error, "update in db")
 }

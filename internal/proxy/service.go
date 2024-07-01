@@ -58,7 +58,10 @@ func (p *Proxy) proxyHTTPRequest(c *gin.Context, route, targetURL string) {
 
 	client := &http.Client{}
 	targetRoute := strings.TrimPrefix(c.Request.RequestURI, servicePrefix+"/"+route)
-	req, err := http.NewRequest(c.Request.Method, targetURL+targetRoute, c.Request.Body)
+	if targetRoute != "/" {
+		targetURL += targetRoute
+	}
+	req, err := http.NewRequest(c.Request.Method, targetURL, c.Request.Body)
 	if err != nil {
 		errors.Response(c, err)
 		return
@@ -88,6 +91,9 @@ func (p *Proxy) proxyHTTPRequest(c *gin.Context, route, targetURL string) {
 		errors.Response(c, err)
 		return
 	}
+
+	// TODO: Add a rollback
+
 	c.Data(resp.StatusCode, resp.Header.Get("Content-Type"), body)
 }
 
