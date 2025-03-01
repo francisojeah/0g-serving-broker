@@ -149,6 +149,31 @@ func (c *Ctrl) GetProgress(id *uuid.UUID) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	baseDir := os.TempDir()
-	return fmt.Sprintf("%s/%s/%s", baseDir, task.ID, TaskLogFileName), nil
+	logDir := "/app/logs"
+	return fmt.Sprintf("%s/%s/progress.log", logDir, task.ID), nil
+}
+
+func (c *Ctrl) CleanupOldLogs() {
+	logDir := "/app/logs"
+	files, err := ioutil.ReadDir(logDir)
+	if err != nil {
+		fmt.Println("Error reading log directory:", err)
+		return
+	}
+
+	expiration := time.Now().Add(-24 * time.Hour) // Keep logs for 24 hours
+
+	for _, file := range files {
+		filePath := filepath.Join(logDir, file.Name())
+		info, err := os.Stat(filePath)
+		if err != nil {
+			fmt.Println("Error getting file info:", err)
+			continue
+		}
+
+		if info.ModTime().Before(expiration) {
+			os.Remove(filePath)
+			fmt.Println("Deleted old log:", filePath)
+		}
+	}
 }

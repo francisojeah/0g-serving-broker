@@ -1,17 +1,43 @@
 import argparse
 import json
 import os
+from datetime import datetime, timedelta
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, AutoConfig, TrainerCallback
 from datasets import load_dataset, load_from_disk
 
 
 class ProgressCallback(TrainerCallback):
-    def __init__(self, log_file_path="/app/mnt/progress.log"):
+    def __init__(self, log_file_path="/app/logs/progress.log"):
         self.log_file_path = log_file_path
         self.log_file = None
 
+    def cleanup_old_logs(self, log_dir=None, days=7):
+        # Use the default log_dir if not provided
+        if not log_dir:
+            log_dir = os.path.dirname(self.log_file_path)
+
+        try:
+            now = datetime.now()
+            cutoff = now - timedelta(days=days)
+
+            # Ensure log directory exists
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+
+            for file in os.listdir(log_dir):
+                file_path = os.path.join(log_dir, file)
+                if file.endswith(".log") and os.path.isfile(file_path):
+                    mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                    if mtime < cutoff:
+                        os.remove(file_path)
+                        print(f"Deleted old log file: {file_path}")
+        except Exception as e:
+            print(f"Error cleaning old logs: {e}")
+
     def on_train_begin(self, args, state, control, **kwargs):
-        # Open the log file at the start of training
+        # Cleanup old logs before starting a new training
+        self.cleanup_old_logs() 
+
         try:
             self.log_file = open(self.log_file_path, "a")
         except Exception as e:
